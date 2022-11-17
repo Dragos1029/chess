@@ -3,6 +3,7 @@
 #include <conio.h>
 #include <wincon.h>
 #include <stdio.h>
+#include <tchar.h>
 
 using namespace std;
 
@@ -43,13 +44,13 @@ char posToChar[7][9] = {
 void whitebg(bool isWhitePiece) {
     int background = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED;
     int foreground = FOREGROUND_RED | FOREGROUND_INTENSITY;
-    if (isWhitePiece) foreground = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+    if (isWhitePiece) foreground = FOREGROUND_BLUE | FOREGROUND_INTENSITY;
     SetConsoleTextAttribute(console, background | foreground | 0x1000);
 }
 
 void blackbg(bool isWhitePiece) {
     int foreground = FOREGROUND_RED | FOREGROUND_INTENSITY;
-    if (isWhitePiece) foreground = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+    if (isWhitePiece) foreground = FOREGROUND_BLUE | FOREGROUND_INTENSITY;
     SetConsoleTextAttribute(console, foreground);
 }
 
@@ -66,23 +67,23 @@ void whitebg() {
 void printGame() {
     bool white = 1;
     for (int i = 0; i < 8; i++) {
+        printf("       ");
         for (int j = 0; j < 8; j++) {
-            //bool isWhitePiece = game[i][j] % 2;
             if (white) whitebg(); else blackbg();
             printf(posToChar[0]);
             white = !white;
         }
         blackbg();
-        printf("\n");
+        int pos = 8 - i;
+        printf("\n   %i   ", pos);
         for (int j = 0; j < 8; j++) {
             bool isWhitePiece = game[i][j] % 2;
             if (white) whitebg(isWhitePiece); else blackbg(isWhitePiece);
             printf(posToChar[game[i][j] / 2]);
-            //printf("   ");
             white = !white;
         }
         blackbg();
-        printf("\n");
+        printf("\n       ");
         for (int j = 0; j < 8; j++) {
             //bool isWhitePiece = game[i][j] % 2;
             if (white) whitebg(); else blackbg();
@@ -93,8 +94,29 @@ void printGame() {
         printf("\n");
         white = !white;
     }
+    printf("\n          A       B       C       D       E       F       G       H    \n\n");
+}
+
+void initWindow() {
+    HWND hWnd;
+    SetConsoleTitle(_T("test"));
+    hWnd = FindWindow(NULL, _T("test"));
+    COORD NewSBSize = GetLargestConsoleWindowSize(console);
+    SMALL_RECT DisplayArea = {0, 0, 0, 0};
+
+    SetConsoleScreenBufferSize(console, NewSBSize);
+
+    DisplayArea.Right = NewSBSize.X - 1;
+    DisplayArea.Bottom = NewSBSize.Y - 1;
+
+    SetConsoleWindowInfo(console, TRUE, &DisplayArea);
+
+    ShowWindow(hWnd, SW_MAXIMIZE);
 }
 
 int main() {
+    initWindow();
+    getch();
     printGame();
+    getch();
 }

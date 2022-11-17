@@ -36,20 +36,20 @@ int game [8][8] = {
     9 , 7 , 5 , 11, 13, 5 , 7 , 9
 };
 
-char posToChar[7][3] = {
-    "  ", "pn", "bp", "kn", "rk", "Qn", "Kg"
+char posToChar[7][9] = {
+    "        ", "  PAWN  ", " BISHOP ", " KNIGHT ", "  ROOK  ", "  QUEEN ", "  KING  "
 };
 
 void whitebg(bool isWhitePiece) {
     int background = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED;
     int foreground = FOREGROUND_RED | FOREGROUND_INTENSITY;
-    if (isWhitePiece) foreground = FOREGROUND_BLUE | FOREGROUND_INTENSITY;
-    SetConsoleTextAttribute(console, background | foreground);
+    if (isWhitePiece) foreground = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+    SetConsoleTextAttribute(console, background | foreground | 0x1000);
 }
 
 void blackbg(bool isWhitePiece) {
     int foreground = FOREGROUND_RED | FOREGROUND_INTENSITY;
-    if (isWhitePiece) foreground = FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+    if (isWhitePiece) foreground = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
     SetConsoleTextAttribute(console, foreground);
 }
 
@@ -58,13 +58,35 @@ void blackbg() {
     SetConsoleTextAttribute(console, foreground);
 }
 
+void whitebg() {
+    int background = BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_BLUE;
+    SetConsoleTextAttribute(console, background);
+}
+
 void printGame() {
     bool white = 1;
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
+            //bool isWhitePiece = game[i][j] % 2;
+            if (white) whitebg(); else blackbg();
+            printf(posToChar[0]);
+            white = !white;
+        }
+        blackbg();
+        printf("\n");
+        for (int j = 0; j < 8; j++) {
             bool isWhitePiece = game[i][j] % 2;
             if (white) whitebg(isWhitePiece); else blackbg(isWhitePiece);
             printf(posToChar[game[i][j] / 2]);
+            //printf("   ");
+            white = !white;
+        }
+        blackbg();
+        printf("\n");
+        for (int j = 0; j < 8; j++) {
+            //bool isWhitePiece = game[i][j] % 2;
+            if (white) whitebg(); else blackbg();
+            printf(posToChar[0]);
             white = !white;
         }
         blackbg();

@@ -4,6 +4,7 @@
 #include <wincon.h>
 #include <stdio.h>
 #include <tchar.h>
+#include <cstring>
 
 using namespace std;
 
@@ -41,6 +42,8 @@ char posToChar[7][9] = {
     "        ", "  PAWN  ", " BISHOP ", " KNIGHT ", "  ROOK  ", "  QUEEN ", "  KING  "
 };
 
+int nextMove[2][2] = {-1, -1, -1, -1};
+
 void whitebg(bool isWhitePiece) {
     int background = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED;
     int foreground = FOREGROUND_RED | FOREGROUND_INTENSITY;
@@ -64,16 +67,20 @@ void whitebg() {
     SetConsoleTextAttribute(console, background);
 }
 
+void blankRow(bool &white) {
+    printf("       ");
+    for (int j = 0; j < 8; j++) {
+        if (white) whitebg(); else blackbg();
+        printf(posToChar[0]);
+        white = !white;
+    }
+    blackbg();
+}
+
 void printGame() {
     bool white = 1;
     for (int i = 0; i < 8; i++) {
-        printf("       ");
-        for (int j = 0; j < 8; j++) {
-            if (white) whitebg(); else blackbg();
-            printf(posToChar[0]);
-            white = !white;
-        }
-        blackbg();
+        blankRow(white);
         int pos = 8 - i;
         printf("\n   %i   ", pos);
         for (int j = 0; j < 8; j++) {
@@ -83,40 +90,91 @@ void printGame() {
             white = !white;
         }
         blackbg();
-        printf("\n       ");
-        for (int j = 0; j < 8; j++) {
-            //bool isWhitePiece = game[i][j] % 2;
-            if (white) whitebg(); else blackbg();
-            printf(posToChar[0]);
-            white = !white;
-        }
-        blackbg();
+        printf("\n");
+        blankRow(white);
         printf("\n");
         white = !white;
     }
     printf("\n          A       B       C       D       E       F       G       H    \n\n");
 }
 
-void initWindow() {
-    HWND hWnd;
-    SetConsoleTitle(_T("test"));
-    hWnd = FindWindow(NULL, _T("test"));
-    COORD NewSBSize = GetLargestConsoleWindowSize(console);
-    SMALL_RECT DisplayArea = {0, 0, 0, 0};
+int letterToInt(char letter) {
+    switch(letter) {
+        case 'a': return 0;
+        case 'b': return 1;
+        case 'c': return 2;
+        case 'd': return 3;
+        case 'e': return 4;
+        case 'f': return 5;
+        case 'g': return 6;
+        case 'h': return 7;
+        default: return -1;
+    }
+}
 
-    SetConsoleScreenBufferSize(console, NewSBSize);
+int numberToInt(char letter) {
+    switch(letter) {
+        case '8': return 0;
+        case '7': return 1;
+        case '6': return 2;
+        case '5': return 3;
+        case '4': return 4;
+        case '3': return 5;
+        case '2': return 6;
+        case '1': return 7;
+        default: return -1;
+    }
+}
 
-    DisplayArea.Right = NewSBSize.X - 1;
-    DisplayArea.Bottom = NewSBSize.Y - 1;
+void toLower(char s[]) {
+    int lenght = strlen(s);
+    for (int i = 0; i < lenght; i++) {
+        s[i] = tolower(s[i]);
+    }
+}
 
-    SetConsoleWindowInfo(console, TRUE, &DisplayArea);
+void getMove() {
+    char input[] = "     ";
+    bool valid = 0;
+    printf("Next move: ");
+    while (!valid) {
+        valid = 1;
+        cin.getline(input, 6);
+        if (input[2] == ' ') {
+            strcpy(input + 2, input + 3);
+        }
+        toLower(input);
+        for (int i = 0; i < 2; i++) {
+            nextMove[i][0] = letterToInt(input[i * 2]);
+            if (nextMove[i][0] == -1) {
+                valid = 0;
+                break;
+            }
+            nextMove[i][1] = numberToInt(input[i * 2 + 1]);
+            if (nextMove[i][1] == -1) {
+                valid = 0;
+                break;
+            }
+        }
+        if (!valid) 
+            printf("Try again: ");
+    }
+}
 
-    ShowWindow(hWnd, SW_MAXIMIZE);
+void performMove() {
+    getMove();
+    printf("your move is: ");
+    for (int i = 0; i < 2; i++) {
+        cout << nextMove[i][0];
+        cout << nextMove[i][1];
+    }
+    printf("\n");
 }
 
 int main() {
-    initWindow();
+    SetConsoleTitle(_T("test"));
     getch();
     printGame();
+    performMove();
     getch();
 }

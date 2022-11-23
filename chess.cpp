@@ -30,14 +30,16 @@ HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
 //The start of a game of chess
 const int initGame [8][8] = {
-    8 , 6 , 4 , 10, 12, 4 , 6 , 8 ,
-    2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 ,
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-    3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 ,
-    9 , 7 , 5 , 11, 13, 5 , 7 , 9
+/*8*/   8 , 6 , 4 , 10, 12, 4 , 6 , 8 ,
+/*7*/   2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 ,
+/*6*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*5*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*4*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*3*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*2*/   3 , 3 , 3 , 3 , 3 , 3 , 3 , 3 ,
+/*1*/   9 , 7 , 5 , 11, 13, 5 , 7 , 9
+/* */
+/*      A   B   C   D   E   F   G   H      */
 };
 
 //Converts piece codes to names
@@ -179,20 +181,49 @@ void getMove(int nextMove[][2]) {
     }
 }
 
-void performMove(int game[][8]) {
+bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
+    int piece = game[move[0][1]][move[0][0]];
+    //int piece
+    int destination = game[move[1][1]][move[1][0]];
+    if (whiteTurn)
+        if (piece % 2 == 0) return false;
+    else
+        if (piece % 2 == 1) return false;
+    switch (piece / 2) {
+        case 1:     //pawn
+            break;
+
+        case 2:     //bishop
+            break;
+
+        case 3:     //knight
+            break;
+
+        case 4:     //rook
+            break;
+
+        case 5:     //queen
+            break;
+
+        case 6:     //king
+            break;
+    
+        default:
+            break;
+    }
+    return false;
+}
+
+void performMove(int game[][8], bool &whiteTurn) {
     int nextMove[2][2] = {-1, -1, -1, -1};
-    /* A move consists of 2 sets of coodinates
+    /* 
+     * A move consists of 2 sets of coodinates
      * First set is the coords for the piece we want to move
      * Second set is the coords for the place we want to move the piece to
      * A set is made of column nr and row nr
      */
     getMove(nextMove);
-    printf("your move is: ");
-    for (int i = 0; i < 2; i++) {
-        cout << nextMove[i][0];
-        cout << nextMove[i][1];
-    }
-    printf("\n");
+    validateMove(nextMove, game, whiteTurn);
 }
 
 void resetGame(int game[][8]) {
@@ -207,8 +238,9 @@ int main() {
     SetConsoleTitle(_T("test"));    //Sets the window title
     getch();                        //Waits for a key press
     int game[8][8];
+    bool whiteTurn = true;          //False = black's turn
     resetGame(game);                //Initializing the game
     printGame(game);                //Displaying the game
-    performMove(game);              //Next move logic
+    performMove(game, whiteTurn);   //Next move logic
     getch();
 }

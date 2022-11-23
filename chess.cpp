@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <tchar.h>
 #include <cstring>
+#include <climits>
 
 using namespace std;
 
@@ -27,7 +28,7 @@ HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
  * 13 = white king
 */
 
-int game [8][8] = {
+const int initGame [8][8] = {
     8 , 6 , 4 , 10, 12, 4 , 6 , 8 ,
     2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 ,
     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
@@ -38,11 +39,9 @@ int game [8][8] = {
     9 , 7 , 5 , 11, 13, 5 , 7 , 9
 };
 
-char posToChar[7][9] = {
+const char posToChar[7][9] = {
     "        ", "  PAWN  ", " BISHOP ", " KNIGHT ", "  ROOK  ", "  QUEEN ", "  KING  "
 };
-
-int nextMove[2][2] = {-1, -1, -1, -1};
 
 void whitebg(bool isWhitePiece) {
     int background = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED;
@@ -77,7 +76,7 @@ void blankRow(bool &white) {
     blackbg();
 }
 
-void printGame() {
+void printGame(int game[][8]) {
     bool white = 1;
     for (int i = 0; i < 8; i++) {
         blankRow(white);
@@ -133,13 +132,17 @@ void toLower(char s[]) {
     }
 }
 
-void getMove() {
+void getMove(int nextMove[][2]) {
     char input[] = "     ";
     bool valid = 0;
     printf("Next move: ");
     while (!valid) {
         valid = 1;
         cin.getline(input, 6);
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(INT_MAX, '\n');
+        }
         if (input[2] == ' ') {
             strcpy(input + 2, input + 3);
         }
@@ -161,8 +164,9 @@ void getMove() {
     }
 }
 
-void performMove() {
-    getMove();
+void performMove(int game[][8]) {
+    int nextMove[2][2] = {-1, -1, -1, -1};
+    getMove(nextMove);
     printf("your move is: ");
     for (int i = 0; i < 2; i++) {
         cout << nextMove[i][0];
@@ -171,10 +175,20 @@ void performMove() {
     printf("\n");
 }
 
+void resetGame(int game[][8]) {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            game[i][j] = initGame[i][j];
+        }
+    }
+}
+
 int main() {
     SetConsoleTitle(_T("test"));
     getch();
-    printGame();
-    performMove();
+    int game[8][8];
+    resetGame(game);
+    printGame(game);
+    performMove(game);
     getch();
 }

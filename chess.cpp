@@ -146,7 +146,6 @@ void toLower(char s[]) {    //Lowers the letters from a char array
 void getMove(int nextMove[][2]) {
     char input[] = "     ";
     bool valid = 0;
-    printf("Next move: ");
     //We continue asking the user until we have a valid move
     while (!valid) {
         valid = 1;
@@ -189,16 +188,10 @@ bool pawnValidation(int game[][8], int move[][2], int pieceColor) {
     int rowDif;
     int maxMoveDistance;
 
-    if (pieceColor == 0) {  //0 for black, 1 for white
-        isFirstMove = move[0][1] == 1;
-        isDirectionCorrect = move[0][1] < move[1][1];
-        rowDif = move[1][1] - move[0][1];
-    }
-    else {
-        isFirstMove = move[0][1] == 6;
-        isDirectionCorrect = move[0][1] > move[1][1];
-        rowDif = move[0][1] - move[1][1];
-    }
+    isFirstMove = move[0][1] == 1;
+    isDirectionCorrect = move[0][1] < move[1][1];
+    rowDif = move[1][1] - move[0][1];
+
     if (rowDif == 0)
         return false;
 
@@ -218,19 +211,71 @@ bool pawnValidation(int game[][8], int move[][2], int pieceColor) {
     } else {
         if (rowDif != 1)
             return false;
-        return (move[0][0] == (move[1][0] - 1)) || (move[0][0] == (move[1][0] - 1));
+        return (move[0][0] == (move[1][0] - 1)) || (move[0][0] == (move[1][0] + 1));
     }
 }
 
-bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
+void copy(int move1[][2], int move2[][2]) {
+    for (int i = 0; i < 2; i++) {
+        move1[i][0] = move2[i][0];
+        move1[i][1] = move2[i][1];
+    }
+}
+
+void copy(int game1[][8], int game2[][8]) {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            game1[i][j] = game2[i][j];
+        }
+    }
+}
+
+void invert(int move1[][2], int move2[][2]) {
+    for (int i = 0; i < 2; i++) {
+        move1[i][0] = 7 - move2[i][0];
+        move1[i][1] = 7 - move2[i][1];
+    }
+}
+
+void invert(int game1[][8], int game2[][8]) {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            game1[i][j] = 7 - game2[i][j];
+        }
+    }
+}
+
+bool equals(int move[][2]) {
+    return move[0][0] == move[1][0] && move[0][1] == move[1][1];
+}
+
+bool validateMove(int move1[][2], int game1[][8], bool whiteTurn) {
+    int move[2][2];
+    int game[8][8];
+
+    if (whiteTurn) {
+        copy(move, move1);
+        copy(game, game1);
+    } else {
+        invert(move, move1);
+        invert(game, game1);
+    }
+
     int piece = game[move[0][1]][move[0][0]];
     int pieceColor = piece % 2; //0 for black, 1 for white
     int pieceType = piece / 2;
 
-    if (whiteTurn)
-        if (pieceColor == 0) return false;
-    else
-        if (pieceColor == 1) return false;
+    if (whiteTurn) {
+        if (pieceColor == 0) {
+            cout << "It's white's turn!";
+            return false;
+        }
+    } else {
+        if (pieceColor == 1) {
+            cout << "It's black's turn!";
+            return false;
+        }
+    }
     
     switch (pieceType) {
         case 1:     //pawn
@@ -267,13 +312,17 @@ void performMove(int game[][8], bool &whiteTurn) {
      * A set is made of column nr and row nr
      */
     bool done = false;
+    printf("Next move: ");
     while (!done) {
         getMove(move);
         bool validMove = validateMove(move, game, whiteTurn);
         if (validMove) {
+            cout << "Valid move!\n";
             game[move[1][1]][move[1][0]] = game[move[0][1]][move[0][0]];
             game[move[0][1]][move[0][0]] = 0;
             done = true;
+        } else {
+            printf("Invalid move!\nTry again: ");
         }
     }
 }
@@ -296,6 +345,7 @@ int main() {
     while (!done) {
         printGame(game);                //Displaying the game
         performMove(game, whiteTurn);   //Next move logic
+        whiteTurn = !whiteTurn;
     }
     getch();
 }

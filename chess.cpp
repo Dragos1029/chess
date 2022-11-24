@@ -181,16 +181,60 @@ void getMove(int nextMove[][2]) {
     }
 }
 
+bool pawnValidation(int game[][8], int move[][2], int pieceColor) {
+    int destination = game[move[1][1]][move[1][0]];
+    int destinationType = destination / 2;
+    bool isFirstMove;
+    bool isDirectionCorrect;
+    int rowDif;
+    int maxMoveDistance;
+
+    if (pieceColor == 0) {  //0 for black, 1 for white
+        isFirstMove = move[0][1] == 1;
+        isDirectionCorrect = move[0][1] < move[1][1];
+        rowDif = move[1][1] - move[0][1];
+    }
+    else {
+        isFirstMove = move[0][1] == 6;
+        isDirectionCorrect = move[0][1] > move[1][1];
+        rowDif = move[0][1] - move[1][1];
+    }
+    if (rowDif == 0)
+        return false;
+
+    if (!isDirectionCorrect)
+        return false;
+
+    if (isFirstMove)
+        maxMoveDistance = 2;
+    else
+        maxMoveDistance = 1;
+    
+    if (destinationType == 0) {
+        bool isDestOnSameColumn = move[0][0] == move[1][0];
+        if (!isDestOnSameColumn)
+            return false;
+        return rowDif <= maxMoveDistance;
+    } else {
+        if (rowDif != 1)
+            return false;
+        return (move[0][0] == (move[1][0] - 1)) || (move[0][0] == (move[1][0] - 1));
+    }
+}
+
 bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
     int piece = game[move[0][1]][move[0][0]];
-    //int piece
-    int destination = game[move[1][1]][move[1][0]];
+    int pieceColor = piece % 2; //0 for black, 1 for white
+    int pieceType = piece / 2;
+
     if (whiteTurn)
-        if (piece % 2 == 0) return false;
+        if (pieceColor == 0) return false;
     else
-        if (piece % 2 == 1) return false;
-    switch (piece / 2) {
+        if (pieceColor == 1) return false;
+    
+    switch (pieceType) {
         case 1:     //pawn
+            return pawnValidation(game, move, pieceColor);
             break;
 
         case 2:     //bishop
@@ -215,15 +259,23 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
 }
 
 void performMove(int game[][8], bool &whiteTurn) {
-    int nextMove[2][2] = {-1, -1, -1, -1};
+    int move[2][2] = {-1, -1, -1, -1};
     /* 
      * A move consists of 2 sets of coodinates
      * First set is the coords for the piece we want to move
      * Second set is the coords for the place we want to move the piece to
      * A set is made of column nr and row nr
      */
-    getMove(nextMove);
-    validateMove(nextMove, game, whiteTurn);
+    bool done = false;
+    while (!done) {
+        getMove(move);
+        bool validMove = validateMove(move, game, whiteTurn);
+        if (validMove) {
+            game[move[1][1]][move[1][0]] = game[move[0][1]][move[0][0]];
+            game[move[0][1]][move[0][0]] = 0;
+            done = true;
+        }
+    }
 }
 
 void resetGame(int game[][8]) {
@@ -235,12 +287,15 @@ void resetGame(int game[][8]) {
 }
 
 int main() {
-    SetConsoleTitle(_T("test"));    //Sets the window title
+    SetConsoleTitle(_T("Chess"));    //Sets the window title
     getch();                        //Waits for a key press
     int game[8][8];
     bool whiteTurn = true;          //False = black's turn
     resetGame(game);                //Initializing the game
-    printGame(game);                //Displaying the game
-    performMove(game, whiteTurn);   //Next move logic
+    int done = false;
+    while (!done) {
+        printGame(game);                //Displaying the game
+        performMove(game, whiteTurn);   //Next move logic
+    }
     getch();
 }

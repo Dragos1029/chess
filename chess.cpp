@@ -180,7 +180,52 @@ void getMove(int nextMove[][2]) {
     }
 }
 
-bool pawnValidation(int game[][8], int move[][2], int pieceColor) {
+void copyMove(int move1[][2], int move2[][2]) {
+    for (int i = 0; i < 2; i++) {
+        move1[i][0] = move2[i][0];
+        move1[i][1] = move2[i][1];
+    }
+}
+
+void copyGame(int game1[][8], int game2[][8]) {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            game1[i][j] = game2[i][j];
+        }
+    }
+}
+
+void invertMove(int move1[][2], int move2[][2]) {
+    for (int i = 0; i < 2; i++) {
+        move1[i][0] = 7 - move2[i][0];
+        move1[i][1] = 7 - move2[i][1];
+    }
+}
+
+void invertGame(int game1[][8], int game2[][8]) {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            game1[i][j] = game2[7 - i][7 - j];
+        }
+    }
+}
+
+bool equalsMove(int move[][2]) {
+    return move[0][0] == move[1][0] && move[0][1] == move[1][1];
+}
+
+bool pawnValidation(int game1[][8], int move1[][2], int pieceColor) {
+    int game[8][8];
+    int move[2][2];
+
+    if (pieceColor == 0) {
+        invertGame(game, game1);
+        invertMove(move, move1);
+    } else {
+        copyGame(game, game1);
+        copyMove(move, move1);
+    }
+
     int destination = game[move[1][1]][move[1][0]];
     int destinationType = destination / 2;
     bool isFirstMove;
@@ -188,15 +233,14 @@ bool pawnValidation(int game[][8], int move[][2], int pieceColor) {
     int rowDif;
     int maxMoveDistance;
 
-    isFirstMove = move[0][1] == 1;
-    isDirectionCorrect = move[0][1] < move[1][1];
-    rowDif = move[1][1] - move[0][1];
+    isFirstMove = move[0][1] == 6;
+    isDirectionCorrect = move[0][1] > move[1][1];
+    rowDif = move[0][1] - move[1][1];
 
-    if (rowDif == 0)
+    if (!isDirectionCorrect) {
+        cout << "Pawn can only go fowards!\n";
         return false;
-
-    if (!isDirectionCorrect)
-        return false;
+    }
 
     if (isFirstMove)
         maxMoveDistance = 2;
@@ -205,60 +249,35 @@ bool pawnValidation(int game[][8], int move[][2], int pieceColor) {
     
     if (destinationType == 0) {
         bool isDestOnSameColumn = move[0][0] == move[1][0];
-        if (!isDestOnSameColumn)
+        if (!isDestOnSameColumn) {
+            cout << "Pawn can only advance in a straight line!\n";
             return false;
-        return rowDif <= maxMoveDistance;
-    } else {
-        if (rowDif != 1)
+        }
+        if (rowDif > maxMoveDistance) {
+            if (isFirstMove)
+                cout << "Pawn can only advance at most 2 positions!\n";
+            else 
+                cout << "Pawn can only advance one position!\n";
             return false;
-        return (move[0][0] == (move[1][0] - 1)) || (move[0][0] == (move[1][0] + 1));
-    }
-}
-
-void copy(int move1[][2], int move2[][2]) {
-    for (int i = 0; i < 2; i++) {
-        move1[i][0] = move2[i][0];
-        move1[i][1] = move2[i][1];
-    }
-}
-
-void copy(int game1[][8], int game2[][8]) {
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            game1[i][j] = game2[i][j];
-        }
-    }
-}
-
-void invert(int move1[][2], int move2[][2]) {
-    for (int i = 0; i < 2; i++) {
-        move1[i][0] = 7 - move2[i][0];
-        move1[i][1] = 7 - move2[i][1];
-    }
-}
-
-void invert(int game1[][8], int game2[][8]) {
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            game1[i][j] = 7 - game2[i][j];
-        }
-    }
-}
-
-bool equals(int move[][2]) {
-    return move[0][0] == move[1][0] && move[0][1] == move[1][1];
-}
-
-bool validateMove(int move1[][2], int game1[][8], bool whiteTurn) {
-    int move[2][2];
-    int game[8][8];
-
-    if (whiteTurn) {
-        copy(move, move1);
-        copy(game, game1);
+        } else
+            return true;
     } else {
-        invert(move, move1);
-        invert(game, game1);
+        if (rowDif != 1) {
+            cout << "Pawn can only advance one position!\n";
+            return false;
+        }
+        if (!(move[0][0] == (move[1][0] - 1)) || (move[0][0] == (move[1][0] + 1))) {
+            cout << "Pawn can only capture diagonally to the left or right!\n";
+            return false;
+        } else
+            return true;
+    }
+}
+
+bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
+    if (equalsMove(move)) {
+        cout << "You didn't make a move!\n";
+        return false;
     }
 
     int piece = game[move[0][1]][move[0][0]];
@@ -267,12 +286,12 @@ bool validateMove(int move1[][2], int game1[][8], bool whiteTurn) {
 
     if (whiteTurn) {
         if (pieceColor == 0) {
-            cout << "It's white's turn!";
+            cout << "It's white's turn!\n";
             return false;
         }
     } else {
         if (pieceColor == 1) {
-            cout << "It's black's turn!";
+            cout << "It's black's turn!\n";
             return false;
         }
     }

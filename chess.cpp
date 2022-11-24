@@ -214,6 +214,7 @@ bool equalsMove(int move[][2]) {
     return move[0][0] == move[1][0] && move[0][1] == move[1][1];
 }
 
+//TODO: Add En Passing and Promotion
 bool pawnValidation(int game1[][8], int move1[][2], int pieceColor) {
     int game[8][8];
     int move[2][2];
@@ -322,7 +323,7 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
     return false;
 }
 
-void performMove(int game[][8], bool &whiteTurn) {
+void performMove(int game[][8], bool &whiteTurn, int capturedPieces[][6]) {
     int move[2][2] = {-1, -1, -1, -1};
     /* 
      * A move consists of 2 sets of coodinates
@@ -337,6 +338,11 @@ void performMove(int game[][8], bool &whiteTurn) {
         bool validMove = validateMove(move, game, whiteTurn);
         if (validMove) {
             cout << "Valid move!\n";
+            //we count captured pieces
+            if (game[move[1][1]][move[1][0]] / 2 != 0) {
+                capturedPieces[whiteTurn][game[move[1][1]][move[1][0]] / 2]++;
+                cout << capturedPieces[1][1] << "\n";
+            }
             game[move[1][1]][move[1][0]] = game[move[0][1]][move[0][0]];
             game[move[0][1]][move[0][0]] = 0;
             done = true;
@@ -346,24 +352,29 @@ void performMove(int game[][8], bool &whiteTurn) {
     }
 }
 
-void resetGame(int game[][8]) {
+void resetGame(int game[][8], int capturedPieces[][6]) {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             game[i][j] = initGame[i][j];
         }
     }
+    for (int i = 0; i < 6; i++) {
+        capturedPieces[0][i] = 0;
+        capturedPieces[1][i] = 0;
+    }
 }
 
 int main() {
-    SetConsoleTitle(_T("Chess"));    //Sets the window title
-    getch();                        //Waits for a key press
+    SetConsoleTitle(_T("Chess"));       //Sets the window title
+    getch();                            //Waits for a key press
     int game[8][8];
-    bool whiteTurn = true;          //False = black's turn
-    resetGame(game);                //Initializing the game
+    int capturedPieces[2][6];           //0 for black, 1 for white
+    bool whiteTurn = true;              //False = black's turn
+    resetGame(game, capturedPieces);    //Initializing the game
     int done = false;
     while (!done) {
         printGame(game);                //Displaying the game
-        performMove(game, whiteTurn);   //Next move logic
+        performMove(game, whiteTurn, capturedPieces);   //Next move logic
         whiteTurn = !whiteTurn;
     }
     getch();

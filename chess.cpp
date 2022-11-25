@@ -13,7 +13,7 @@ HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
 /*
  * 0  = blank
- * 1  = blank
+ * 1  = en passant pawn
  * 2  = black pawn
  * 3  = white pawn
  * 4  = black bishop

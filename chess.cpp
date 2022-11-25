@@ -277,7 +277,7 @@ bool pawnValidation(int game1[][8], int move1[][2], int pieceColor) {
             return false;
         }
     } else {
-        if (!(move[0][0] == (move[1][0] - 1)) || (move[0][0] == (move[1][0] + 1))) {
+        if (move[0][0] != (move[1][0] - 1) && move[0][0] != (move[1][0] + 1)) {
             cout << "Pawn can only capture diagonally to the left or right!\n";
             return false;
         }
@@ -308,7 +308,8 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
     }
 
     int piece = game[move[0][1]][move[0][0]];
-    int pieceColor = piece % 2; //0 for black, 1 for white
+    int destination = game[move[1][1]][move[1][0]];
+    int pieceColor = (piece - 2) % 2; //0 for black, 1 for white
     int pieceType = piece / 2;
 
     resetEnPassant(whiteTurn, game);
@@ -322,6 +323,10 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
             cout << "It's black's turn!\n";
             return false;
         }
+    }
+    if (destination / 2 != 0 && destination % 2 == pieceColor) {
+        cout << "U can't capture your own piece!\n";
+        return false;
     }
 
     switch (pieceType) {
@@ -360,10 +365,10 @@ void performMove(int game[][8], bool &whiteTurn) {
      */
     bool done = false;
     int newGame[8][8];
-    copyGame(newGame, game);
     printf("Next move: ");
     while (!done) {
         getMove(move);
+        copyGame(newGame, game);
         bool validMove = validateMove(move, newGame, whiteTurn);
         if (validMove) {
             cout << "Valid move!\n";

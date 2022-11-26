@@ -6,6 +6,7 @@
 #include <tchar.h>
 #include <cstring>
 #include <climits>
+#include <cmath>
 
 using namespace std;
 
@@ -226,7 +227,7 @@ void resetEnPassant(bool isWhite, int game[][8]) {
     }
 }
 
-//TODO: Add En Passing and Promotion
+//TODO: Add Promotion
 bool pawnValidation(int game1[][8], int move1[][2], int pieceColor) {
     int game[8][8];
     int move[2][2];
@@ -301,6 +302,32 @@ bool pawnValidation(int game1[][8], int move1[][2], int pieceColor) {
     return true;
 }
 
+bool bishopValidation(int game[][8], int move[][2]) {
+    int columnDif = move[1][0] - move[0][0];
+    int rowDif = move[1][1] - move[0][1];
+    int rowMod = 1;
+    int colMod = 1;
+    if (move[0][1] > move[1][1])
+        rowMod = -1;
+    if (move[0][0] > move[1][0])
+        colMod = -1;
+    if (columnDif * colMod != rowDif * rowMod) {
+        cout << "Bishop can only move diagonaly!\n";
+        return false;
+    }
+    for (int i = 1; i < rowDif * rowMod; i++) {
+        int row = move[0][1] + i * rowMod;
+        int col = move[0][0] + i * colMod;
+        if (game[row][col] / 2 != 0) {
+            cout << "Bishop can not jump over pieces\n";
+            return false;
+        }
+    }
+    game[move[1][1]][move[1][0]] = game[move[0][1]][move[0][0]];
+    game[move[0][1]][move[0][0]] = 0;
+    return true;
+}
+
 bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
     if (equalsMove(move)) {
         cout << "You didn't make a move!\n";
@@ -325,7 +352,7 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
         }
     }
     if (destination / 2 != 0 && destination % 2 == pieceColor) {
-        cout << "U can't capture your own piece!\n";
+        cout << "U can not capture your own piece!\n";
         return false;
     }
 
@@ -335,6 +362,7 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
             break;
 
         case 2:     //bishop
+            return bishopValidation(game, move);
             break;
 
         case 3:     //knight

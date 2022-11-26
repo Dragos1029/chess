@@ -328,6 +328,20 @@ bool bishopValidation(int game[][8], int move[][2]) {
     return true;
 }
 
+bool knightValidation(int game[][8], int move[][2]) {
+    int columnDif = abs(move[1][0] - move[0][0]);
+    int rowDif = abs(move[1][1] - move[0][1]);
+    bool longCol = columnDif == 2 && rowDif == 1;
+    bool longRow = columnDif == 1 && rowDif == 2;
+    if (!longRow && !longCol) {
+        cout << "Knight can only move in an L shape!\n";
+        return false;
+    }
+    game[move[1][1]][move[1][0]] = game[move[0][1]][move[0][0]];
+    game[move[0][1]][move[0][0]] = 0;
+    return true;
+}
+
 bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
     if (equalsMove(move)) {
         cout << "You didn't make a move!\n";
@@ -340,7 +354,7 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
     int pieceType = piece / 2;
 
     resetEnPassant(whiteTurn, game);
-    if (whiteTurn) {
+    if (pieceType != 0 && whiteTurn) {
         if (pieceColor == 0) {
             cout << "It's white's turn!\n";
             return false;
@@ -366,6 +380,7 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
             break;
 
         case 3:     //knight
+            return knightValidation(game, move);
             break;
 
         case 4:     //rook
@@ -378,6 +393,7 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
             break;
     
         default:
+            cout << "No piece to move!\n";
             break;
     }
     return false;

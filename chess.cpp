@@ -43,6 +43,19 @@ const int initGame [8][8] = {
 /*      A   B   C   D   E   F   G   H      */
 };
 
+const int testGame [8][8] = {
+/*8*/   8 , 0 , 4 , 10, 12, 4 , 0 , 8 ,
+/*7*/   2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 ,
+/*6*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*5*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*4*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*3*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*2*/   3 , 3 , 3 , 3 , 3 , 3 , 3 , 0 ,
+/*1*/   9 , 0 , 5 , 11, 13, 5 , 0 , 9
+/* */
+/*      A   B   C   D   E   F   G   H      */
+};
+
 //Converts piece codes to names
 const char posToChar[7][9] = {
     "        ", "  PAWN  ", " BISHOP ", " KNIGHT ", "  ROOK  ", "  QUEEN ", "  KING  "
@@ -342,6 +355,39 @@ bool knightValidation(int game[][8], int move[][2]) {
     return true;
 }
 
+bool rookValidation(int game[][8], int move[][2]) {
+    int columnDif = abs(move[1][0] - move[0][0]);
+    int rowDif = abs(move[1][1] - move[0][1]);
+    bool longCol = rowDif == 0;
+    bool longRow = columnDif == 0;
+    if (!longRow && !longCol) {
+        cout << "Rook can only move in a straight line!\n";
+        return false;
+    }
+    bool isRow = rowDif > columnDif;
+    bool ascending = move[1][0] > move[0][0];
+    if (isRow)
+        ascending = move[1][1] > move[0][1];
+    int iMod = -1;
+    if (ascending)
+        iMod = 1;
+    for (int i = 1; i < columnDif + rowDif; i++) {
+        int row = move[0][1];
+        int column = move[0][0];
+        int add = i * iMod;
+        if (isRow)
+            row += add;
+        else column += add;
+        if (game[row][column] / 2 != 0) {
+            cout << "Rook cannot jump over other pieces!\n";
+            return false;
+        }
+    }
+    game[move[1][1]][move[1][0]] = game[move[0][1]][move[0][0]];
+    game[move[0][1]][move[0][0]] = 0;
+    return true;
+}
+
 bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
     if (equalsMove(move)) {
         cout << "You didn't make a move!\n";
@@ -384,6 +430,7 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
             break;
 
         case 4:     //rook
+            return rookValidation(game, move);
             break;
 
         case 5:     //queen

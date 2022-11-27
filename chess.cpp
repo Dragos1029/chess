@@ -48,9 +48,9 @@ const int testGame [8][8] = {
 /*7*/   2 , 2 , 2 , 2 , 2 , 2 , 2 , 2 ,
 /*6*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
 /*5*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-/*4*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*4*/   0 , 0 , 0 , 0 , 13, 0 , 0 , 0 ,
 /*3*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-/*2*/   3 , 3 , 3 , 3 , 3 , 3 , 3 , 0 ,
+/*2*/   3 , 3 , 3 , 0 , 0 , 0 , 3 , 0 ,
 /*1*/   9 , 0 , 5 , 11, 13, 5 , 0 , 9
 /* */
 /*      A   B   C   D   E   F   G   H      */
@@ -422,6 +422,18 @@ bool queenValidation(int game[][8], int move[][2]) {
     return true;
 }
 
+bool kingValidation(int game[][8], int move[][2]) {
+    int columnDif = move[1][0] - move[0][0];
+    int rowDif = move[1][1] - move[0][1];
+    if (abs(columnDif) > 1 || abs(rowDif) > 1) {
+        cout << "King can move at most one position!\n";
+        return false;
+    }
+    game[move[1][1]][move[1][0]] = game[move[0][1]][move[0][0]];
+    game[move[0][1]][move[0][0]] = 0;
+    return true;
+}
+
 bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
     if (equalsMove(move)) {
         cout << "You didn't make a move!\n";
@@ -472,6 +484,7 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
             break;
 
         case 6:     //king
+            return kingValidation(game, move);
             break;
     
         default:

@@ -388,6 +388,40 @@ bool rookValidation(int game[][8], int move[][2]) {
     return true;
 }
 
+bool queenValidation(int game[][8], int move[][2]) {
+    int columnDif = move[1][0] - move[0][0];
+    int rowDif = move[1][1] - move[0][1];
+    bool diagonal = abs(columnDif) == abs(rowDif);
+    bool vertical = columnDif == 0;
+    bool horizontal = rowDif == 0;
+    bool straight = vertical || horizontal;
+    if (!diagonal && !straight) {
+        cout << "Queen can only move in straight or diagonal lines!\n";
+        return false;
+    }
+    int rowMod = 1;
+    int colMod = 1;
+    if (columnDif < 0)
+        colMod = -1;
+    if (rowDif < 0)
+        rowMod = -1;
+    if (horizontal)
+        rowMod = 0;
+    if (vertical)
+        colMod = 0;
+    for (int i = 1; i < max(abs(columnDif), abs(rowDif)); i++) {
+        int row = move[0][1] + i * rowMod;
+        int col = move[0][0] + i * colMod;
+        if (game[row][col] / 2 != 0) {
+            cout << "Queen can not jump over pieces!\n";
+            return false;
+        }
+    }
+    game[move[1][1]][move[1][0]] = game[move[0][1]][move[0][0]];
+    game[move[0][1]][move[0][0]] = 0;
+    return true;
+}
+
 bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
     if (equalsMove(move)) {
         cout << "You didn't make a move!\n";
@@ -434,6 +468,7 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
             break;
 
         case 5:     //queen
+            return queenValidation(game, move);
             break;
 
         case 6:     //king
@@ -484,7 +519,7 @@ int main() {
     getch();                            //Waits for a key press
     int game[8][8];
     bool whiteTurn = true;              //False = black's turn
-    resetGame(game);    //Initializing the game
+    resetGame(game);                    //Initializing the game
     int done = false;
     while (!done) {
         printGame(game);                //Displaying the game

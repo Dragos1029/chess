@@ -494,6 +494,88 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
     return false;
 }
 
+void findKings(int game[][8], int kings[2][2]) {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            int piece = game[i][j];
+            int pieceType = piece / 2;
+            int pieceColor = piece % 2;
+            if (pieceType == 6) {
+                kings[pieceColor][0] = j;
+                kings[pieceColor][1] = i;
+            }
+        }
+    }
+}
+
+bool isPosInCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks[]) {
+    int rowPos = pos[1];
+    int colPos = pos[0];
+    cout << "diagonal check\n";
+    for (int rowMod = -1; rowMod <= 1; rowMod += 2) {
+        cout << "rowMod: " << rowMod << "\n";
+        for (int colMod = -1; colMod <= 1; colMod += 2) {
+            cout << "colMod: " << colMod << "\n";
+            int i = 0;
+            while (true) {
+                i++;
+                int row = rowPos + rowMod * i;
+                int col = colPos + colMod * i;
+                if (max(row, col) > 7 || min(row, col) < 0)
+                    break;
+                cout << "row: " << row << " col: "<< col <<  "\n";
+                int piece = game[row][col];
+                int pieceType = piece / 2;
+                int pieceColor = piece % 2;
+                if (pieceType != 0) {
+                    if (pieceColor == colorToCheck) {
+                        if (pieceType == 2 || pieceType == 5) {
+                            posThatChecks[0] = col;
+                            posThatChecks[1] = row;
+                            return true;
+                        } else break;
+                    } else break;
+                }
+            }
+        }
+    }
+    cout << "straight check\n";
+    for (int isRow = 0; isRow <= 1; isRow++) {
+        cout << "isRow: " << isRow << "\n";
+        for (int mod = -1; mod <= 1; mod += 2) {
+            cout << "mod: " << mod << "\n";
+            int i = 0;
+            while (true) {
+                i++;
+                int row = rowPos + mod * i * isRow;
+                int col = colPos + mod * i * (!isRow);
+                if (max(row, col) > 7 || min(row, col) < 0)
+                    break;
+                cout << "row: " << row << " col: "<< col <<  "\n";
+                int piece = game[row][col];
+                int pieceType = piece / 2;
+                int pieceColor = piece % 2;
+                if (pieceType != 0) {
+                    if (pieceColor == colorToCheck) {
+                        if (pieceType == 4 || pieceType == 5) {
+                            posThatChecks[0] = col;
+                            posThatChecks[1] = row;
+                            return true;
+                        } else break;
+                    } else break;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+int validateCheck(int move[][2], int game[][8], bool whiteTurn) {
+    int kings[2][2];
+    findKings(game, kings);
+    return 0;
+}
+
 void performMove(int game[][8], bool &whiteTurn) {
     int move[2][2] = {-1, -1, -1, -1};
     /* 
@@ -516,6 +598,7 @@ void performMove(int game[][8], bool &whiteTurn) {
         } else {
             printf("Invalid move!\nTry again: ");
         }
+        int check = validateCheck(move, newGame, whiteTurn);
     }
 }
 
@@ -535,6 +618,9 @@ int main() {
     resetGame(game);                    //Initializing the game
     int done = false;
     while (!done) {
+        int pos[2] = {3, 3};
+        int posThatChecks[2];
+        isPosInCheck(game, pos, 0, posThatChecks);
         printGame(game);                //Displaying the game
         performMove(game, whiteTurn);   //Next move logic
         whiteTurn = !whiteTurn;

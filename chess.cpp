@@ -47,14 +47,14 @@ const int initGame [8][8] = {
 };
 
 const int testGame [8][8] = {
-/*8*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-/*7*/   0 , 10, 0 , 0 , 0 , 0 , 0 , 0 ,
-/*6*/   8 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-/*5*/   0 , 0 , 3 , 13, 2 , 0 , 0 , 0 ,
-/*4*/   8 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*8*/   0 , 0 , 0 , 0 , 12, 0 , 0 , 0 ,
+/*7*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*6*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*5*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*4*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
 /*3*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-/*2*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-/*1*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0
+/*2*/   3 , 0 , 0 , 0 , 0 , 0 , 0 , 2 ,
+/*1*/   0 , 0 , 0 , 0 , 13, 0 , 0 , 0
 /* */
 /*      A   B   C   D   E   F   G   H      */
 };
@@ -695,13 +695,75 @@ bool isPosInCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks
  * 2 = oponent check
  */
 int validateCheck(int move[][2], int game[][8], bool whiteTurn, int checkPos[]) {
-    int kings[2][2];
+    int kings[2][2] = {-1, -1, -1, -1};
     findKings(game, kings);
     bool selfCheck = isPosInCheck(game, kings[whiteTurn], !whiteTurn, checkPos, true, false);
     if (selfCheck) return 1;
     bool oponentCheck = isPosInCheck(game, kings[!whiteTurn], whiteTurn, checkPos, true, false);
     if (oponentCheck) return 2;
     return 0;
+}
+
+void checkForPromotion(int game[0][8]) {
+    int piece = -1;
+    int pieceType = -1;
+    int pieceColor = -1;
+    int row = -1;
+    int col = -1;
+    bool done = false;
+    for (int sRow = 0; sRow <= 7 && !done; sRow += 7) {
+        for (int sCol = 0; sCol <= 7 && !done; sCol++) {
+            piece = game[sRow][sCol];
+            pieceType = piece / 2;
+            pieceColor = piece % 2;
+            if (pieceType == 1) {
+                row = sRow;
+                col = sCol;
+                done = true;
+            }
+        }
+    }
+    if (row == -1 || col == -1) return;
+    char input[] = " ";
+    bool valid = 0;
+    int answer = -1;
+    cout << "You must promote the pawn to another piece!\nType 1 for bishop, 2 for knight, 3 for rook or 4 for queen: ";
+    while (!valid) {
+        valid = 1;
+        cin.getline(input, 2);
+        if (cin.fail()) {
+            //Clears the console in case the user types more than 5 chars
+            cin.clear();
+            cin.ignore(INT_MAX, '\n');
+        }
+        switch (input[0])
+        {
+        case '1':
+            answer = 1;
+            break;
+        
+        case '2':
+            answer = 2;
+            break;
+        
+        case '3':
+            answer = 3;
+            break;
+        
+        case '4':
+            answer = 4;
+            break;
+
+        default:
+            valid = 0;
+            break;
+        }
+        if (!valid) 
+            printf("Try again: ");
+    }
+    int newPieceType = answer + 1;
+    int newPiece = newPieceType * 2 + pieceColor;
+    game[row][col] = newPiece;
 }
 
 //true if move results in 
@@ -721,7 +783,7 @@ int performMove(int game[][8], bool &whiteTurn, int checkPos[], bool lastCheck) 
         copyGame(newGame, game);
         bool validMove = validateMove(move, newGame, whiteTurn);
         if (validMove) {
-            //cout << "Valid move!\n";
+            checkForPromotion(newGame);
             int check = validateCheck(move, newGame, whiteTurn, checkPos);
             if (check == 1) {
                 if (lastCheck)
@@ -801,7 +863,7 @@ bool canBlockPath(int game[][8], bool whiteTurn, int king[2], int checkPos[2]) {
 }
 
 bool canGetOutOfCheck(int game[][8], bool whiteTurn, int checkPos[]) {
-    int kings[2][2];
+    int kings[2][2] = {-1, -1, -1, -1};
     int auxCheckPos[2];
     findKings(game, kings);
     int king[2];

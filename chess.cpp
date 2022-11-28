@@ -50,7 +50,7 @@ const int testGame [8][8] = {
 /*8*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
 /*7*/   0 , 10, 0 , 0 , 0 , 0 , 0 , 0 ,
 /*6*/   8 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-/*5*/   0 , 0 , 2 , 13, 2 , 0 , 0 , 0 ,
+/*5*/   0 , 0 , 3 , 13, 2 , 0 , 0 , 0 ,
 /*4*/   8 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
 /*3*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
 /*2*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
@@ -461,7 +461,12 @@ bool validateMove(int move[][2], int game[][8], bool whiteTurn) {
         }
     }
     if (destination / 2 != 0 && destination % 2 == pieceColor) {
-        cout << "U can not capture your own piece!\n";
+        cout << "You can not capture your own piece!\n";
+        return false;
+    }
+
+    if (destination / 2 == 6) {
+        cout << "You can not capture a king!\n";
         return false;
     }
 
@@ -671,7 +676,7 @@ bool pawnCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks[],
     return false;
 }
 
-bool isPosInCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks[], bool checkIfCapture) {
+bool isPosInCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks[], bool checkIfCapture, bool ignoreKing) {
     bool diagonal = diagonalCheck(game, pos, colorToCheck, posThatChecks);
     if (diagonal) return true;
     bool straight = straightCheck(game, pos, colorToCheck, posThatChecks);
@@ -679,7 +684,7 @@ bool isPosInCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks
     bool knight = knightCheck(game, pos, colorToCheck, posThatChecks);
     if (knight) return true;
     bool king = kingCheck(game, pos, colorToCheck, posThatChecks);
-    if (king) return true;
+    if (king && !ignoreKing) return true;
     bool pawn = pawnCheck(game, pos, colorToCheck, posThatChecks, checkIfCapture);
     if (pawn) return true;
     return false;
@@ -692,15 +697,15 @@ bool isPosInCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks
 int validateCheck(int move[][2], int game[][8], bool whiteTurn, int checkPos[]) {
     int kings[2][2];
     findKings(game, kings);
-    bool selfCheck = isPosInCheck(game, kings[whiteTurn], !whiteTurn, checkPos, true);
+    bool selfCheck = isPosInCheck(game, kings[whiteTurn], !whiteTurn, checkPos, true, false);
     if (selfCheck) return 1;
-    bool oponentCheck = isPosInCheck(game, kings[!whiteTurn], whiteTurn, checkPos, true);
+    bool oponentCheck = isPosInCheck(game, kings[!whiteTurn], whiteTurn, checkPos, true, false);
     if (oponentCheck) return 2;
     return 0;
 }
 
 //true if move results in 
-bool performMove(int game[][8], bool &whiteTurn, int checkPos[]) {
+int performMove(int game[][8], bool &whiteTurn, int checkPos[], bool lastCheck) {
     int move[2][2] = {-1, -1, -1, -1};
     /* 
      * A move consists of 2 sets of coodinates
@@ -716,13 +721,17 @@ bool performMove(int game[][8], bool &whiteTurn, int checkPos[]) {
         copyGame(newGame, game);
         bool validMove = validateMove(move, newGame, whiteTurn);
         if (validMove) {
-            cout << "Valid move!\n";
+            //cout << "Valid move!\n";
             int check = validateCheck(move, newGame, whiteTurn, checkPos);
             if (check == 1) {
-                cout << "Can't put your king in check!\nTry again: ";
+                if (lastCheck)
+                    cout << "You must get out of check!\nTry again: ";
+                else
+                    cout << "Can't put your king in check!\nTry again: ";
             } else {
                 done = true;
                 copyGame(game, newGame);
+                cout << "\n";
                 if (check == 2) return true;
             }
         } else {
@@ -745,12 +754,12 @@ bool canMoveKing(int game[][8], int king[2], bool whiteTurn) {
             if (!tooBig && !tooSmall && !center) {
                 int piece = game[row][col];
                 int pieceType = piece / 2;
-                if (pieceType != 0) {
+                if (pieceType == 0) {
                     int pos[2];
                     int checkPos[2];
                     pos[1] = row;
                     pos[0] = col;
-                    bool check = isPosInCheck(game, pos, !whiteTurn, checkPos, true);
+                    bool check = isPosInCheck(game, pos, !whiteTurn, checkPos, true, false);
                     if (!check) return true;
                 }
             }
@@ -785,7 +794,7 @@ bool canBlockPath(int game[][8], bool whiteTurn, int king[2], int checkPos[2]) {
         int pos[2];
         pos[0] = col;
         pos[1] = row;
-        bool block = isPosInCheck(game, pos, whiteTurn, auxCheckPos, false);
+        bool block = isPosInCheck(game, pos, whiteTurn, auxCheckPos, false, true);
         if (block) return true;
     }
     return false;
@@ -800,7 +809,7 @@ bool canGetOutOfCheck(int game[][8], bool whiteTurn, int checkPos[]) {
     king[1] = kings[whiteTurn][1];
     bool moveKing = canMoveKing(game, king, whiteTurn);
     if (moveKing) return true;
-    bool canAttackCheck = isPosInCheck(game, checkPos, whiteTurn, auxCheckPos, true);
+    bool canAttackCheck = isPosInCheck(game, checkPos, whiteTurn, auxCheckPos, true, false);
     if (canAttackCheck) return true;
     int piece = game[checkPos[1]][checkPos[0]];
     int pieceType = piece / 2;
@@ -829,10 +838,6 @@ void resetGameTest(int game[][8]) {
 int main() {
     SetConsoleTitle(_T("Chess"));       //Sets the window title
     getch();                            //Waits for a key press
-    int tGame[8][8];
-    resetGameTest(tGame);
-    int checkPos[2] = {1, 1};
-    cout << canGetOutOfCheck(tGame, true, checkPos);
     int inGame = true;
     while (inGame) {
         int game[8][8];
@@ -843,13 +848,19 @@ int main() {
         int done = false;
         while (!done) {
             printGame(game);                //Displaying the game
-            inCheck = performMove(game, whiteTurn, checkPos);   //Next move logic
+            inCheck = performMove(game, whiteTurn, checkPos, inCheck);   //Next move logic
             whiteTurn = !whiteTurn;
             if (inCheck) {
                 done = !canGetOutOfCheck(game, whiteTurn, checkPos);
             }
         }
+        printGame(game);
+        if (whiteTurn)
+            cout << "Black wins!\n";
+        else
+            cout << "White wins!\n";
+        cout << "Press any key to play again: ";
+        getch();
+        cout << "\n\n";
     }
-
-    getch();
 }

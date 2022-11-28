@@ -8,6 +8,9 @@
 #include <climits>
 #include <cmath>
 
+#define BLACK 0
+#define WHITE 1
+
 using namespace std;
 
 HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -44,11 +47,11 @@ const int initGame [8][8] = {
 };
 
 const int testGame [8][8] = {
-/*8*/   13, 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-/*7*/   0 , 0 , 7 , 0 , 0 , 0 , 0 , 0 ,
-/*6*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-/*5*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-/*4*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*8*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*7*/   0 , 10, 0 , 0 , 0 , 0 , 0 , 0 ,
+/*6*/   8 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+/*5*/   0 , 0 , 2 , 13, 2 , 0 , 0 , 0 ,
+/*4*/   8 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
 /*3*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
 /*2*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
 /*1*/   0 , 0 , 0 , 0 , 0 , 0 , 0 , 0
@@ -245,7 +248,7 @@ bool pawnValidation(int game1[][8], int move1[][2], int pieceColor) {
     int game[8][8];
     int move[2][2];
 
-    if (pieceColor == 0) {
+    if (pieceColor == BLACK) {
         invertGame(game, game1);
         invertMove(move, move1);
     } else {
@@ -594,8 +597,8 @@ bool knightCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks[
                                 posThatChecks[0] = col;
                                 posThatChecks[1] = row;
                                 return true;
-                            } else break;
-                        } else break;
+                            }
+                        }
                     }
                 }
             }
@@ -604,23 +607,100 @@ bool knightCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks[
     return false;
 }
 
-bool isPosInCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks[]) {
+bool kingCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks[]) {
+    int rowPos = pos[1];
+    int colPos = pos[0];
+    for (int rowAdd = -1; rowAdd <= 1; rowAdd++) {
+        for (int colAdd = -1; colAdd <= 1; colAdd++) {
+            int row = rowPos + rowAdd;
+            int col = colPos + colAdd;
+            bool tooBig = max(row, col) > 7;
+            bool tooSmall = max(row, col) < 0;
+            bool center = rowAdd == 0 && colAdd == 0;
+            if (!tooBig && !tooSmall && !center) {
+                int piece = game[row][col];
+                int pieceType = piece / 2;
+                int pieceColor = piece % 2;
+                if (pieceType != 0) {
+                    if (pieceColor == colorToCheck) {
+                        if (pieceType == 6) {
+                            posThatChecks[0] = col;
+                            posThatChecks[1] = row;
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool pawnCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks[], bool checkIfCapture) {
+    int rowPos = pos[1];
+    int colPos = pos[0];
+    int rowAdd = 1;
+    if (colorToCheck == BLACK)
+        rowAdd = -1;
+    int colStart = 0;
+    int colEnd = 0;
+    if (checkIfCapture) {
+        colStart = -1;
+        colEnd = 1;
+    }
+    for (int colAdd = colStart; colAdd <= colEnd; colAdd += 2) {
+        int row = rowPos + rowAdd;
+        int col = colPos + colAdd;
+        bool tooBig = max(row, col) > 7;
+        bool tooSmall = max(row, col) < 0;
+        if (!tooSmall && !tooBig) {
+            int piece = game[row][col];
+            int pieceType = piece / 2;
+            int pieceColor = piece % 2;
+            if (pieceType != 0) {
+                if (pieceColor == colorToCheck) {
+                    if (pieceType == 1) {
+                        posThatChecks[0] = col;
+                        posThatChecks[1] = row;
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool isPosInCheck(int game[][8], int pos[], bool colorToCheck, int posThatChecks[], bool checkIfCapture) {
     bool diagonal = diagonalCheck(game, pos, colorToCheck, posThatChecks);
     if (diagonal) return true;
     bool straight = straightCheck(game, pos, colorToCheck, posThatChecks);
     if (straight) return true;
     bool knight = knightCheck(game, pos, colorToCheck, posThatChecks);
     if (knight) return true;
+    bool king = kingCheck(game, pos, colorToCheck, posThatChecks);
+    if (king) return true;
+    bool pawn = pawnCheck(game, pos, colorToCheck, posThatChecks, checkIfCapture);
+    if (pawn) return true;
     return false;
 }
-
-int validateCheck(int move[][2], int game[][8], bool whiteTurn) {
+/*
+ * 0 = none
+ * 1 = self check
+ * 2 = oponent check
+ */
+int validateCheck(int move[][2], int game[][8], bool whiteTurn, int checkPos[]) {
     int kings[2][2];
     findKings(game, kings);
+    bool selfCheck = isPosInCheck(game, kings[whiteTurn], !whiteTurn, checkPos, true);
+    if (selfCheck) return 1;
+    bool oponentCheck = isPosInCheck(game, kings[!whiteTurn], whiteTurn, checkPos, true);
+    if (oponentCheck) return 2;
     return 0;
 }
 
-void performMove(int game[][8], bool &whiteTurn) {
+//true if move results in 
+bool performMove(int game[][8], bool &whiteTurn, int checkPos[]) {
     int move[2][2] = {-1, -1, -1, -1};
     /* 
      * A move consists of 2 sets of coodinates
@@ -637,13 +717,97 @@ void performMove(int game[][8], bool &whiteTurn) {
         bool validMove = validateMove(move, newGame, whiteTurn);
         if (validMove) {
             cout << "Valid move!\n";
-            copyGame(game, newGame);
-            done = true;
+            int check = validateCheck(move, newGame, whiteTurn, checkPos);
+            if (check == 1) {
+                cout << "Can't put your king in check!\nTry again: ";
+            } else {
+                done = true;
+                copyGame(game, newGame);
+                if (check == 2) return true;
+            }
         } else {
             printf("Invalid move!\nTry again: ");
         }
-        int check = validateCheck(move, newGame, whiteTurn);
     }
+    return false;
+}
+
+bool canMoveKing(int game[][8], int king[2], bool whiteTurn) {
+    int rowPos = king[1];
+    int colPos = king[0];
+    for (int rowAdd = -1; rowAdd <= 1; rowAdd++) {
+        for (int colAdd = -1; colAdd <= 1; colAdd++) {
+            int row = rowPos + rowAdd;
+            int col = colPos + colAdd;
+            bool tooBig = max(row, col) > 7;
+            bool tooSmall = max(row, col) < 0;
+            bool center = rowAdd == 0 && colAdd == 0;
+            if (!tooBig && !tooSmall && !center) {
+                int piece = game[row][col];
+                int pieceType = piece / 2;
+                if (pieceType != 0) {
+                    int pos[2];
+                    int checkPos[2];
+                    pos[1] = row;
+                    pos[0] = col;
+                    bool check = isPosInCheck(game, pos, !whiteTurn, checkPos, true);
+                    if (!check) return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool canBlockPath(int game[][8], bool whiteTurn, int king[2], int checkPos[2]) {
+    int auxCheckPos[2];
+    int kingRow = king[1];
+    int kingCol = king[0];
+    int checkRow = checkPos[1];
+    int checkCol = checkPos[0];
+    int columnDif = checkCol - kingCol;
+    int rowDif = checkRow - kingRow;
+    bool vertical = columnDif == 0;
+    bool horizontal = rowDif == 0;
+    int rowMod = 1;
+    int colMod = 1;
+    if (columnDif < 0)
+        colMod = -1;
+    if (rowDif < 0)
+        rowMod = -1;
+    if (horizontal)
+        rowMod = 0;
+    if (vertical)
+        colMod = 0;
+    for (int i = 1; i < max(abs(columnDif), abs(rowDif)); i++) {
+        int row = kingRow + i * rowMod;
+        int col = kingCol + i * colMod;
+        int pos[2];
+        pos[0] = col;
+        pos[1] = row;
+        bool block = isPosInCheck(game, pos, whiteTurn, auxCheckPos, false);
+        if (block) return true;
+    }
+    return false;
+}
+
+bool canGetOutOfCheck(int game[][8], bool whiteTurn, int checkPos[]) {
+    int kings[2][2];
+    int auxCheckPos[2];
+    findKings(game, kings);
+    int king[2];
+    king[0] = kings[whiteTurn][0];
+    king[1] = kings[whiteTurn][1];
+    bool moveKing = canMoveKing(game, king, whiteTurn);
+    if (moveKing) return true;
+    bool canAttackCheck = isPosInCheck(game, checkPos, whiteTurn, auxCheckPos, true);
+    if (canAttackCheck) return true;
+    int piece = game[checkPos[1]][checkPos[0]];
+    int pieceType = piece / 2;
+    if (pieceType != 2 && pieceType != 4 && pieceType != 5) return false;
+    bool canBlock = canBlockPath(game, whiteTurn, king, checkPos);
+    if (canBlock) return true;
+    return false;
 }
 
 void resetGame(int game[][8]) {
@@ -665,21 +829,27 @@ void resetGameTest(int game[][8]) {
 int main() {
     SetConsoleTitle(_T("Chess"));       //Sets the window title
     getch();                            //Waits for a key press
-    int game[8][8];
-    bool whiteTurn = true;              //False = black's turn
-    resetGame(game);                    //Initializing the game
-    int done = false;
-    while (!done) {
-        //for testing
-        int pos[2] = {0, 0};
-        int posThatChecks[2];
-        int posGame[8][8];
-        resetGameTest(posGame);
-        cout << isPosInCheck(posGame, pos, 0, posThatChecks) << "\n";
-        //for testing
-        printGame(game);                //Displaying the game
-        performMove(game, whiteTurn);   //Next move logic
-        whiteTurn = !whiteTurn;
+    int tGame[8][8];
+    resetGameTest(tGame);
+    int checkPos[2] = {1, 1};
+    cout << canGetOutOfCheck(tGame, true, checkPos);
+    int inGame = true;
+    while (inGame) {
+        int game[8][8];
+        bool whiteTurn = true;              //False = black's turn
+        int checkPos[2];                    //Pos that puts oponent in check
+        int inCheck = false;
+        resetGame(game);                    //Initializing the game
+        int done = false;
+        while (!done) {
+            printGame(game);                //Displaying the game
+            inCheck = performMove(game, whiteTurn, checkPos);   //Next move logic
+            whiteTurn = !whiteTurn;
+            if (inCheck) {
+                done = !canGetOutOfCheck(game, whiteTurn, checkPos);
+            }
+        }
     }
+
     getch();
 }
